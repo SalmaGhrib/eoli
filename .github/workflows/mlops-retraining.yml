@@ -1,0 +1,64 @@
+name: MLOps Retraining
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "train.py"
+      - "src/ml/**"
+      - "preprocessing/**"
+      - "requirements.txt"
+      - "Dockerfile"
+      - "data/**"
+      - "config/**"
+
+jobs:
+  retraining:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run tests
+        run: |
+          echo "Run project tests here"
+
+      - name: Validate GitHub context
+        run: |
+          if [ -z "${{ github.repository }}" ]; then
+            echo "::error::github.repository is empty"
+            exit 1
+          fi
+          if [ -z "${{ github.ref_name }}" ]; then
+            echo "::error::github.ref_name is empty"
+            exit 1
+          fi
+          if [ -z "${{ github.sha }}" ]; then
+            echo "::error::github.sha is empty"
+            exit 1
+          fi
+
+      - name: Trigger MLOps retraining
+        run: |
+          PAYLOAD=$(jq -n \
+            --arg pid "68" \
+            --arg repo "${{ github.repository }}" \
+            --arg branch "${{ github.ref_name }}" \
+            --arg sha "${{ github.sha }}" \
+            '{
+              "projectId": ($pid | tonumber),
+              "triggerType": "GITHUB_PUSH",
+              "repository": $repo,
+              "branch": $branch,
+              "commitSha": $sha
+            }')
+
+          echo "Payload: $PAYLOAD"
+
+          curl --fail-with-body -X POST \
+            "${{ secrets.MLOPS_API_URL }}/api/retraining/external/trigger" \
+            -H "Content-Type: application/json" \
+            -H "X-RETRAINING-KEY: ${{ secrets.MLOPS_RETRAINING_KEY }}" \
+            -d "$PAYLOAD"
