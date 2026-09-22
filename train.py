@@ -13,7 +13,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-
+# Test du réentraînement automatique GitHub Actions
 CLASS_TO_TARGET = {
     "BENIGN_OR_NORMAL": 0,
     "MALIGNANT": 1,
